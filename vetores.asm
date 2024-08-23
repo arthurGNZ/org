@@ -18,7 +18,7 @@ main:
 	addi t1, t1, 1
 	beq t0, t1, swap_aux
 	addi t1, t1, 1
-	beq t0, t1, ordenar
+	beq t0, t1, ordenar_aux
 	j op_invalida
 
 exibir_menu: 
@@ -146,16 +146,55 @@ swap:
 	ret
 	
 #---------------------
+ordenar_aux:
+	li s0, 0#var de controle
+	li s2,0#var de controle 2 
+	#a1 é a var para teste do fim do laço
+	mv t0, a0
+	call ordenar
+	j main
 ordenar:
-	beq t3, a1, main
-	add t2, t3,t3
-	add t2, t2,t2
-	add t2, t4, t2
-	lw a0, 0(t2)
-	mv t6, a0
-	addi t3,t3,1
-	blt s0,t6, troca_maior
-	j maior_valor
+	beq s0, a1, fim_ord
+	add s1, s0,s0
+	add s1, s1,s1
+	add s1, t0, s1
+	addi s0,s0,1
+	li s2, 0
+	j ordenar_2
+ordenar_2:
+	beq s2, a1, ordenar
+	add s3, s2,s2
+	add s3, s3,s3
+	add s3, t0,s3
+	
+	addi s7, s3, 4
+	lw s5, 0(s3)#elemento atual do 2º loop
+	lw s6, 0(s7)#elemento atual+1 do 2º loop
+	mv a2, s2
+	addi a3, s2, 1
+	
+	blt s6, s5, chama_swap	
+
+	addi s2,s2,1
+	j ordenar_2
+chama_swap:
+	li t6, 4
+	
+	mul t1,t6,a2#pega quantas posições até o 1º indice
+	add t1, t0, t1#end 1º indíce
+	lw t3, 0(t1)#valor 1º indice	
+	
+	mul t2, t6,a3 #pega quantas posições até o 2º indice
+	add t2, t0, t2#end 2º indíce
+	lw t4, 0(t2)#valor 2º indice
+	
+	sw t3, 0(t2)
+	sw t4, 0(t1)
+
+	addi s2,s2,1
+	j ordenar_2
+fim_ord:
+	ret
 op_invalida:
 	li a7,10
 	ecall
