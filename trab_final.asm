@@ -1,5 +1,5 @@
 	.data 
-vet:		.space	54 #0 de ninguém, X - Jogador 1, # - Jogador 2
+tabuleiro:		.space	54 #0 de ninguém, X - Jogador 1, # - Jogador 2
 num_jogador:	.word	1
 tamanho_tab:	.word	7
 dificuldade:	.word	1
@@ -20,4 +20,4 @@ quebra:	.asciz	"\n"
 espaco:	.asciz	" "
 txt2: 	.asciz "teste"
 	.text
-main:
+inicializa_tabuleiro:
