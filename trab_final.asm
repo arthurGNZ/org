@@ -20,4 +20,43 @@ quebra:	.asciz	"\n"
 espaco:	.asciz	" "
 txt2: 	.asciz "teste"
 	.text
-inicializa_tabuleiro:
+
+main_menu:
+	la a0, txt_menu
+	li a7, 4
+	ecall
+	li a7, 5
+	ecall
+	li t0,1
+	li t1,2
+	li t2,3
+	beq a0,t0,config_submenu
+	beq a0,t1,game_menu
+	beq a0,t2,finish
+	j error
+	
+config_submenu:
+	la a0, txt_submenu
+	li a7, 4
+	ecall
+	li a7, 5
+	ecall
+	li t0,1
+	li t1,2
+	li t2,3
+	li t3,4
+	li t4,5
+	beq
+	
+error:
+	la a0, txt_opcao_inv
+	li a7, 4
+	ecall
+	j main_menu
+	
+game_menu:
+	j error
+
+finish:
+	li a7,10
+	ecall
