@@ -17,7 +17,7 @@ txt_config_tam:	.asciz	"\n	- Tamanho do tabuleiro:"
 txt_config_con:	.asciz	"\n	- Placar:"
 txt_opcao_inv:	.asciz	"\nEscolha Inválida! Voltando para o menu inicial"
 quebra:	.asciz	"\n"
-espaco
+espaco:	.asciz	" "
 txt2: 	.asciz "teste"
 .text
 main:
