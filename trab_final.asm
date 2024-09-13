@@ -19,5 +19,5 @@ txt_opcao_inv:	.asciz	"\nEscolha Inválida! Voltando para o menu inicial"
 quebra:	.asciz	"\n"
 espaco:	.asciz	" "
 txt2: 	.asciz "teste"
-.text
+	.text
 main:
