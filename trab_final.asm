@@ -21,10 +21,9 @@ espaco:           .asciz " "
 placeholder_txt:             .asciz "\n Menu em construção voltando para menu inicial \n"
 
 .text
-.globl _start
-
 _start:
     j main_menu
+
 
 
 main_menu:
@@ -94,7 +93,7 @@ config_tabuleiro:
     li a7, 4
     ecall
 
-    li a7,4 
+    li a7,5
     ecall
 
     li t0, 7
