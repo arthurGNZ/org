@@ -21,6 +21,7 @@ txt_config_tam:   .asciz "\n  - Tamanho do tabuleiro: "
 txt_config_con:   .asciz "\n  - Placar (Jogador 1 vs Jogador 2): "
 txt_opcao_inv:    .asciz "\nEscolha inválida! Voltando para o menu inicial\n"
 espaco:           .asciz " "
+
 quebra:	.asciz	"\n"
 
 .text
@@ -43,6 +44,11 @@ main_menu:
 #--------------------	
 
 config_submenu:
+
+    la a0, clear_cmd
+    li a7, 4
+    ecall
+    
     la a0, txt_submenu
     li a7, 4
     ecall
@@ -71,20 +77,17 @@ config_jogadores:
 
     li a7, 5
     ecall
-
+    
+    la a1,num_jogador
     li t0, 1
-    beq a0, t0, salva_jogador
+    beq a0, t0, altera_word
     li t1, 2
-    beq a0, t1, salva_jogador
+    beq a0, t1, altera_word
+    
 
     j error
-
-salva_jogador:
-    la t1, num_jogador
-    sw a0, 0(t1)
-    j main_menu
-
-#--------------------	
+    
+#--------------------	  
 
 config_tabuleiro:
     la a0, txt_tabuleiro
@@ -93,18 +96,14 @@ config_tabuleiro:
 
     li a7,5
     ecall
-
+    la a1, tamanho_tab
     li t0, 7
-    beq a0, t0, salva_tab
+    beq a0, t0, altera_word
     li t1, 9
-    beq a0, t1, salva_tab
+    beq a0, t1, altera_word
 
     j error
 
-salva_tab:
-    la t1, tamanho_tab
-    sw a0, 0(t1)
-    j main_menu
 
 #--------------------	
 config_dificuldade:
@@ -114,19 +113,18 @@ config_dificuldade:
 
     li a7, 5
     ecall
-
+    la a1, dificuldade
     li t0,1
-    beq a0, t0, salva_dif
+    beq a0, t0, altera_word
     li t1, 2
-    beq a0, t1, salva_dif
+    beq a0, t1, altera_word
 
     j error
 
-salva_dif:
-    la t1, dificuldade
-    sw a0, 0(t1)
-    j main_menu
-
+#--------------------	
+altera_word:
+	sw  a0, 0(a1)
+	j main_menu
 #--------------------	
 
 zerar_contadores:
