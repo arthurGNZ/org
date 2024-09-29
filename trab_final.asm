@@ -2,7 +2,7 @@
 #Arthur Henrique Paulini Grasnievicz - 2311100002
 #Gabriel Gois - 2311100030
 .data 
-tabuleiro:        .space    54     #0 de ninguém, X - Jogador 1, # - Jogador 2
+tabuleiro:        .space    54     #0 de ninguém, 1 - Jogador 1, 2 - Jogador 2
 num_jogador:      .word     1
 tamanho_tab:      .word     7
 dificuldade:      .word     1         
@@ -258,8 +258,223 @@ error:
     li a7, 4
     ecall
     j main_menu
+    
 #--------------------	
+verifica_vencedor:
+    # a0: endereço da matriz_jogo
+    # a1: quantidade de colunas
+    # a2: jogador que realizou a última jogada
+    # a3: linha da última jogada
+    # a4: coluna da última jogada
 
+    mv t5, a0
+    mv t6, a1
+
+
+    jal ra, verifica_linha
+    li t0, 4
+    beq a0, t0, vencedor_encontrado
+
+
+    mv a0, t5
+    mv a1, t6
+
+
+    jal ra, verifica_coluna
+    li t0, 4
+    beq a0, t0, vencedor_encontrado
+
+
+    mv a0, t5
+    mv a1, t6
+
+
+    jal ra, verifica_diagonal_decrescente
+    li t0, 4
+    beq a0, t0, vencedor_encontrado
+
+
+    mv a0, t5
+    mv a1, t6
+
+
+    jal ra, verifica_diagonal_crescente
+    li t0, 4
+    beq a0, t0, vencedor_encontrado
+
+
+    li a0, -1
+    ret
+
+vencedor_encontrado:
+    li a0, 1
+    mv a1, a2  
+    ret
+
+#---------------------------
+verifica_linha:
+    li t0, 0  
+    mv t1, a4  
+
+verifica_esquerda:
+    bltz t1, fim_esquerda
+    mul t2, a3, a1
+    add t2, t2, t1
+    add t2, t2, a0
+    lb t3, 0(t2)
+    bne t3, a2, fim_esquerda
+    addi t0, t0, 1
+    addi t1, t1, -1
+    j verifica_esquerda
+
+fim_esquerda:
+    mv t1, a4
+    addi t1, t1, 1
+
+verifica_direita:
+    bge t1, a1, fim_direita
+    mul t2, a3, a1
+    add t2, t2, t1
+    add t2, t2, a0
+    lb t3, 0(t2)
+    bne t3, a2, fim_direita
+    addi t0, t0, 1
+    addi t1, t1, 1
+    j verifica_direita
+
+fim_direita:
+    mv a0, t0
+    ret
+
+#---------------------------
+
+verifica_coluna:
+    li t0, 0  
+    mv t1, a3  
+
+
+verifica_baixo:
+    li t2, 6  
+    bge t1, t2, fim_baixo
+    mul t2, t1, a1
+    add t2, t2, a4
+    add t2, t2, a0
+    lb t3, 0(t2)
+    bne t3, a2, fim_baixo
+    addi t0, t0, 1
+    addi t1, t1, 1
+    j verifica_baixo
+
+fim_baixo:
+    mv t1, a3
+    addi t1, t1, -1
+
+
+verifica_cima:
+    bltz t1, fim_cima
+    mul t2, t1, a1
+    add t2, t2, a4
+    add t2, t2, a0
+    lb t3, 0(t2)
+    bne t3, a2, fim_cima
+    addi t0, t0, 1
+    addi t1, t1, -1
+    j verifica_cima
+
+fim_cima:
+    mv a0, t0
+    ret
+
+#---------------------------
+verifica_diagonal_decrescente:
+    li t0, 0  
+    mv t1, a3  
+    mv t2, a4  
+
+
+verifica_baixo_direita:
+    li t3, 6  
+    bge t1, t3, fim_baixo_direita
+    bge t2, a1, fim_baixo_direita
+    mul t3, t1, a1
+    add t3, t3, t2
+    add t3, t3, a0
+    lb t4, 0(t3)
+    bne t4, a2, fim_baixo_direita
+    addi t0, t0, 1
+    addi t1, t1, 1
+    addi t2, t2, 1
+    j verifica_baixo_direita
+
+fim_baixo_direita:
+    mv t1, a3
+    mv t2, a4
+    addi t1, t1, -1
+    addi t2, t2, -1
+
+
+verifica_cima_esquerda:
+    bltz t1, fim_cima_esquerda
+    bltz t2, fim_cima_esquerda
+    mul t3, t1, a1
+    add t3, t3, t2
+    add t3, t3, a0
+    lb t4, 0(t3)
+    bne t4, a2, fim_cima_esquerda
+    addi t0, t0, 1
+    addi t1, t1, -1
+    addi t2, t2, -1
+    j verifica_cima_esquerda
+
+fim_cima_esquerda:
+    mv a0, t0
+    ret
+
+#---------------------------
+verifica_diagonal_crescente:
+    li t0, 0  
+    mv t1, a3  
+    mv t2, a4  
+
+
+verifica_baixo_esquerda:
+    li t3, 6  
+    bge t1, t3, fim_baixo_esquerda
+    bltz t2, fim_baixo_esquerda
+    mul t3, t1, a1
+    add t3, t3, t2
+    add t3, t3, a0
+    lb t4, 0(t3)
+    bne t4, a2, fim_baixo_esquerda
+    addi t0, t0, 1
+    addi t1, t1, 1
+    addi t2, t2, -1
+    j verifica_baixo_esquerda
+
+fim_baixo_esquerda:
+    mv t1, a3
+    mv t2, a4
+    addi t1, t1, -1
+    addi t2, t2, 1
+
+
+verifica_cima_direita:
+    bltz t1, fim_cima_direita
+    bge t2, a1, fim_cima_direita
+    mul t3, t1, a1
+    add t3, t3, t2
+    add t3, t3, a0
+    lb t4, 0(t3)
+    bne t4, a2, fim_cima_direita
+    addi t0, t0, 1
+    addi t1, t1, -1
+    addi t2, t2, 1
+    j verifica_cima_direita
+
+fim_cima_direita:
+    mv a0, t0
+    ret
+#---------------------------
 finish:
     li a7, 10
     ecall
