@@ -1,4 +1,3 @@
-#Alunos: 
 #Arthur Henrique Paulini Grasnievicz - 2311100002
 #Gabriel Gois - 2311100030
 .data 
@@ -9,6 +8,7 @@ dificuldade:      .word     1
 vit_jogador1:     .word     0
 vit_jogador2:     .word     0
 jogador_atual:	  .word	    1
+num_jogadas:      .word     0
 txt_menu:         .asciz "\n1) Configuração \n2) Jogar \n3) Sair\n"
 txt_submenu:      .asciz "\n1) Quantidade de jogadores: \n2) Tamanho do tabuleiro \n3) Modo de dificuldade \n4) Zerar contadores \n5) Mostrar configurações atuais\n"
 txt_jogadores:    .asciz "\nDigite a quantidade de jogadores (1 ou 2):\n"
@@ -22,6 +22,9 @@ txt_config_con:   .asciz "\n  - Placar (Jogador 1 vs Jogador 2): "
 txt_opcao_inv:    .asciz "\nEscolha inválida! Voltando para o menu inicial\n"
 txt_jogada:	  .asciz "\nDigite a posição que deseja jogar: "
 txt_jogada_invalida:	.asciz	"\nJogada inválida, tente outra!"
+txt_vencedor:     .asciz "\nParabéns! Jogador "
+txt_venceu:       .asciz " venceu!\n"
+txt_empate:       .asciz "\nO jogo empatou!\n"
 espaco:           .asciz " "
 quebra:	.asciz	"\n"
 clear_cmd:	  .asciz "\n\n\n\n\n\n\n\n\n"
@@ -190,28 +193,128 @@ mostrar_config:
 
 #--------------------	
 game_menu:
-	la a0, tabuleiro #pos. de memória da matriz do tabuleiro
-	la a1, tamanho_tab 
-	lw a1, 0(a0) #quantidade de colunas do tabuleiro
-	call inicializa_tabuleiro
-	call imprime_tabuleiro
-	j loop_jogo
-	
+    la a0, tabuleiro #pos. de memória da matriz do tabuleiro
+    la a1, tamanho_tab 
+    lw a1, 0(a1) #quantidade de colunas do tabuleiro
+    call inicializa_tabuleiro
+    call imprime_tabuleiro
+    la t0, num_jogadas
+    sw zero, 0(t0)
+    
+    j loop_jogo
+#--------------------		
 loop_jogo:
-	call jogada
-	call imprime_tabuleiro
-	
-    	la a0, tabuleiro #pos. de memória da matriz do tabuleiro
- 	
- 	la a1, tamanho_tab 
-	lw a1, 0(a0) #quantidade de colunas do tabuleiro
-	
-	la a2, jogador_atual
-	lw a2, 0(a2)
-	
-	
-#	call verifica_vencedor
-	j loop_jogo
+    call jogada
+    call imprime_tabuleiro
+    
+    # Incrementa o número de jogadas
+    la t0, num_jogadas
+    lw t1, 0(t0)
+    addi t1, t1, 1
+    sw t1, 0(t0)
+    
+    # Verifica vencedor se 4 ou mais jogadas foram feitas
+    li t2, 4
+    blt t1, t2, continua_jogo
+    
+    la a0, tabuleiro #pos. de memória da matriz do tabuleiro
+    la a1, tamanho_tab 
+    lw a1, 0(a1) #quantidade de colunas do tabuleiro
+    la a2, jogador_atual
+    lw a2, 0(a2)
+    # a3 e a4 são definidos na função jogada
+    
+    call verifica_vencedor
+    li t0, 1
+    beq a0, t0, fim_jogo
+    
+    call verifica_empate
+    li t0, 1
+    beq a0, t0, empate_jogo
+    
+
+continua_jogo:
+    # Troca o jogador se o jogo não acabou
+    la t0, jogador_atual
+    lw t1, 0(t0)
+    li t2, 1
+    beq t1, t2, troca_para_jogador_2
+    li t2, 2
+    beq t1, t2, troca_para_jogador_1
+    
+troca_para_jogador_1:
+    li t1, 1
+    sw t1, 0(t0)
+    j loop_jogo
+    
+troca_para_jogador_2:
+    li t1, 2
+    sw t1, 0(t0)
+    j loop_jogo
+
+    
+fim_jogo:
+    # Imprime mensagem de vencedor
+    la a0, txt_vencedor
+    li a7, 4
+    ecall
+    
+    mv a0, a1  # a1 contém o número do jogador vencedor
+    li a7, 1
+    ecall
+    
+    la a0, txt_venceu
+    li a7, 4
+    ecall
+    
+    # Atualiza contador de vitórias
+    la t0, vit_jogador1
+    lw t1, 0(t0)
+    addi t1, t1, 1
+    sw t1, 0(t0)
+    
+    j main_menu
+    
+empate_jogo:
+    la a0, txt_empate
+    li a7, 4
+    ecall
+    j main_menu
+#--------------------
+verifica_empate:
+    la t0, num_jogadas
+    lw t1, 0(t0)
+
+    la t2, tamanho_tab
+    lw t3, 0(t2)
+
+    li t4, 7
+    beq t3, t4, verifica_empate_7x6
+
+    li t4, 9
+    beq t3, t4, verifica_empate_9x6
+
+    j verifica_empate_fim
+
+verifica_empate_7x6:
+    li t5, 42  # Máximo de jogadas em um tabuleiro 7x6
+    beq t1, t5, empate_ocorreu
+    j verifica_empate_fim
+
+verifica_empate_9x6:
+    li t5, 54  # Máximo de jogadas em um tabuleiro 9x6
+    beq t1, t5, empate_ocorreu
+    j verifica_empate_fim
+
+empate_ocorreu:
+
+    li a0, 1
+    ret
+
+verifica_empate_fim:
+
+    li a0, -1
+    ret
 #--------------------
 inicializa_tabuleiro:
 	li t0, 53 #tamanho do tabuleiro
@@ -286,7 +389,7 @@ verifica_vencedor:
 
     mv t5, a0
     mv t6, a1
-
+	mv a7,ra
 
     jal ra, verifica_linha
     li t0, 4
@@ -321,11 +424,13 @@ verifica_vencedor:
 
 
     li a0, -1
+    mv ra,a7
     ret
 
 vencedor_encontrado:
     li a0, 1
-    mv a1, a2  
+    mv a1, a2
+    mv ra,a7 
     ret
 
 #---------------------------
@@ -492,53 +597,46 @@ fim_cima_direita:
     mv a0, t0
     ret
 #---------------------------
+
 jogada:#a0 recebe o tabuleiro e a1 a coluna em que deseja jogar
-	li a7, 4
-	la a0, txt_jogada
-	ecall
-	li a7, 5
-	ecall
-	mv a1, a0
-	la a0, tabuleiro #pos. de memória da matriz do tabuleiro
-	li t1, 5 #variavel de controle do loop
-	li t0, 0 #limite loop
-	la t2, tamanho_tab
-	lw t2, tamanho_tab
-	addi t2, t2, -1
-	bgt t0, a1, jogada_invalida
-	bgt a1, t2, jogada_invalida
-	addi t2, t2, 1
-	j loop_jogada
+    li a7, 4
+    la a0, txt_jogada
+    ecall
+    li a7, 5
+    ecall
+    mv a1, a0
+    la a0, tabuleiro #pos. de memória da matriz do tabuleiro
+    li t1, 5 #variavel de controle do loop
+    li t0, 0 #limite loop
+    la t2, tamanho_tab
+    lw t2, 0(t2)
+    addi t2, t2, -1
+    bgt t0, a1, jogada_invalida
+    bgt a1, t2, jogada_invalida
+    addi t2, t2, 1
+    j loop_jogada
 	
 loop_jogada:
-	bgt t0,t1, jogada_invalida
-	mul t4, t1, t2 #t4 recebe linha_atual*tam_linha
+	blt t1, t0, jogada_invalida
+   	mul t4, t1, t2 #t4 recebe linha_atual*tam_linha
 	add t4, t4, a1 #t4 recebe as linhas andadas + coluna atual
-	add t4, t4, a0 #t4 recebe pos_inicial do tabuleiro+quantidades de casa necessária para chegar na pos atual 
-	
+ 	add t4, t4, a0 #t4 recebe pos_inicial do tabuleiro+quantidades de casa necessária para chegar na pos atual 
+    
 	lb t3, 0(t4)
 	la t5, jogador_atual
 	lw t5, 0(t5)
 	beq t3, t0, adiciona_jogada
 	addi t1, t1, -1
 	j loop_jogada
-
+	
 adiciona_jogada:
-	sb t5, 0(t4)
-	la t2, jogador_atual
-	lb t0, 0(t2)
-	li t1, 1
-	beq t0, t1, inverteJ1
-	j inverteJ2
-	
-inverteJ1:
-	li t1, 2
-	sw t1, 0(t2)
-	j final_jogada
-	
-inverteJ2:
-	sw t1, 0(t2)
-	j final_jogada 
+    sb t5, 0(t4)
+    la t2, jogador_atual
+    lb t0, 0(t2)
+    mv a3, t1
+    mv a4, a1
+    ret
+    
 	
 jogada_invalida:
 	li a7, 4
@@ -546,10 +644,7 @@ jogada_invalida:
 	ecall
 	j jogada
 	
-final_jogada:
-    	mv a3, t1
-    	mv a4, a1
-	ret
+
 #---------------------------
 finish:
     li a7, 10
