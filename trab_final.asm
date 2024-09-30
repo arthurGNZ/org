@@ -2,7 +2,7 @@
 #Gabriel Gois - 2311100030
 .data 
 tabuleiro:        .space    54     #0 de ninguém, 1 - Jogador 1, 2 - Jogador 2
-num_jogador:      .word     1
+num_jogador:      .word     2
 tamanho_tab:      .word     7
 dificuldade:      .word     1         
 vit_jogador1:     .word     0
@@ -25,6 +25,7 @@ txt_jogada_invalida:	.asciz	"\nJogada inválida, tente outra!"
 txt_vencedor:     .asciz "\nParabéns! Jogador "
 txt_venceu:       .asciz " venceu!\n"
 txt_empate:       .asciz "\nO jogo empatou!\n"
+txt_ia:		  .asciz "\nJogada da ia:\n"
 espaco:           .asciz " "
 quebra:	.asciz	"\n"
 clear_cmd:	  .asciz "\n\n\n\n\n\n\n\n\n"
@@ -597,8 +598,16 @@ fim_cima_direita:
     mv a0, t0
     ret
 #---------------------------
-
-jogada:#a0 recebe o tabuleiro e a1 a coluna em que deseja jogar
+carrega_jogada:	
+    la a0, jogador_atual
+    lw a0, 0(a0)
+    li a1, 1
+    beq a0, a1, carrega_jogador
+    la a0, num_jogador
+    lw a0, 0(a0)
+    beq a0, a1, carrega_jogador
+    j carrega_ia
+carrega_jogador:
     li a7, 4
     la a0, txt_jogada
     ecall
@@ -606,6 +615,23 @@ jogada:#a0 recebe o tabuleiro e a1 a coluna em que deseja jogar
     ecall
     mv a1, a0
     la a0, tabuleiro #pos. de memória da matriz do tabuleiro
+    ret
+carrega_ia:
+    la a0, txt_ia
+    li a7, 4
+    ecall
+    la a1, tamanho_tab
+    lw a1, 0(a1)
+    li a7, 42
+    ecall
+    mv a1, a0
+    la a0, tabuleiro
+    ret
+
+jogada:#a0 recebe o tabuleiro e a1 a coluna em que deseja jogar
+    mv t0, ra
+    call carrega_jogada
+    mv ra, t0
     li t1, 5 #variavel de controle do loop
     li t0, 0 #limite loop
     la t2, tamanho_tab
@@ -621,7 +647,6 @@ loop_jogada:
    	mul t4, t1, t2 #t4 recebe linha_atual*tam_linha
 	add t4, t4, a1 #t4 recebe as linhas andadas + coluna atual
  	add t4, t4, a0 #t4 recebe pos_inicial do tabuleiro+quantidades de casa necessária para chegar na pos atual 
-    
 	lb t3, 0(t4)
 	la t5, jogador_atual
 	lw t5, 0(t5)
