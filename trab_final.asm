@@ -8,7 +8,7 @@ tamanho_tab:      .word     7
 dificuldade:      .word     1         
 vit_jogador1:     .word     0
 vit_jogador2:     .word     0
-
+jogador_atual:	  .word	    1
 txt_menu:         .asciz "\n1) Configuração \n2) Jogar \n3) Sair\n"
 txt_submenu:      .asciz "\n1) Quantidade de jogadores: \n2) Tamanho do tabuleiro \n3) Modo de dificuldade \n4) Zerar contadores \n5) Mostrar configurações atuais\n"
 txt_jogadores:    .asciz "\nDigite a quantidade de jogadores (1 ou 2):\n"
@@ -20,10 +20,11 @@ txt_config_qnt:   .asciz "\n  - Quantidade de jogadores: "
 txt_config_tam:   .asciz "\n  - Tamanho do tabuleiro: "
 txt_config_con:   .asciz "\n  - Placar (Jogador 1 vs Jogador 2): "
 txt_opcao_inv:    .asciz "\nEscolha inválida! Voltando para o menu inicial\n"
+txt_jogada:	  .asciz "\nDigite a posição que deseja jogar: "
+txt_jogada_invalida:	.asciz	"\nJogada inválida, tente outra!"
 espaco:           .asciz " "
-
 quebra:	.asciz	"\n"
-
+clear_cmd:	  .asciz "\n\n\n\n\n\n\n\n\n"
 .text
 main_menu:
     la a0, txt_menu
@@ -191,10 +192,26 @@ mostrar_config:
 game_menu:
 	la a0, tabuleiro #pos. de memória da matriz do tabuleiro
 	la a1, tamanho_tab 
-	lb a1, 0(a0) #quantidade de colunas do tabuleiro
+	lw a1, 0(a0) #quantidade de colunas do tabuleiro
 	call inicializa_tabuleiro
 	call imprime_tabuleiro
-	j main_menu
+	j loop_jogo
+	
+loop_jogo:
+	call jogada
+	call imprime_tabuleiro
+	
+    	la a0, tabuleiro #pos. de memória da matriz do tabuleiro
+ 	
+ 	la a1, tamanho_tab 
+	lw a1, 0(a0) #quantidade de colunas do tabuleiro
+	
+	la a2, jogador_atual
+	lw a2, 0(a2)
+	
+	
+#	call verifica_vencedor
+	j loop_jogo
 #--------------------
 inicializa_tabuleiro:
 	li t0, 53 #tamanho do tabuleiro
@@ -474,6 +491,65 @@ verifica_cima_direita:
 fim_cima_direita:
     mv a0, t0
     ret
+#---------------------------
+jogada:#a0 recebe o tabuleiro e a1 a coluna em que deseja jogar
+	li a7, 4
+	la a0, txt_jogada
+	ecall
+	li a7, 5
+	ecall
+	mv a1, a0
+	la a0, tabuleiro #pos. de memória da matriz do tabuleiro
+	li t1, 5 #variavel de controle do loop
+	li t0, 0 #limite loop
+	la t2, tamanho_tab
+	lw t2, tamanho_tab
+	addi t2, t2, -1
+	bgt t0, a1, jogada_invalida
+	bgt a1, t2, jogada_invalida
+	addi t2, t2, 1
+	j loop_jogada
+	
+loop_jogada:
+	bgt t0,t1, jogada_invalida
+	mul t4, t1, t2 #t4 recebe linha_atual*tam_linha
+	add t4, t4, a1 #t4 recebe as linhas andadas + coluna atual
+	add t4, t4, a0 #t4 recebe pos_inicial do tabuleiro+quantidades de casa necessária para chegar na pos atual 
+	
+	lb t3, 0(t4)
+	la t5, jogador_atual
+	lw t5, 0(t5)
+	beq t3, t0, adiciona_jogada
+	addi t1, t1, -1
+	j loop_jogada
+
+adiciona_jogada:
+	sb t5, 0(t4)
+	la t2, jogador_atual
+	lb t0, 0(t2)
+	li t1, 1
+	beq t0, t1, inverteJ1
+	j inverteJ2
+	
+inverteJ1:
+	li t1, 2
+	sw t1, 0(t2)
+	j final_jogada
+	
+inverteJ2:
+	sw t1, 0(t2)
+	j final_jogada 
+	
+jogada_invalida:
+	li a7, 4
+	la a0, txt_jogada_invalida
+	ecall
+	j jogada
+	
+final_jogada:
+    	mv a3, t1
+    	mv a4, a1
+	ret
 #---------------------------
 finish:
     li a7, 10
