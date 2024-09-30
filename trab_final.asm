@@ -2,7 +2,7 @@
 #Gabriel Gois - 2311100030
 .data 
 tabuleiro:        .space    54     #0 de ninguém, 1 - Jogador 1, 2 - Jogador 2
-num_jogador:      .word     2
+num_jogador:      .word     1
 tamanho_tab:      .word     7
 dificuldade:      .word     1         
 vit_jogador1:     .word     0
@@ -12,6 +12,7 @@ num_jogadas:      .word     0
 txt_menu:         .asciz "\n1) Configuração \n2) Jogar \n3) Sair\n"
 txt_submenu:      .asciz "\n1) Quantidade de jogadores: \n2) Tamanho do tabuleiro \n3) Modo de dificuldade \n4) Zerar contadores \n5) Mostrar configurações atuais\n"
 txt_jogadores:    .asciz "\nDigite a quantidade de jogadores (1 ou 2):\n"
+txt_comeco:	   .asciz "\nDigite qual jogador deve começar jogando (1 ou 2):"
 txt_tabuleiro:    .asciz "\nEscolha a largura do tabuleiro (7 ou 9):\n"
 txt_dificuldade:  .asciz "\nEscolha a dificuldade (1 para fácil ou 2 para médio):\n"
 txt_config:       .asciz "\nAs configurações atuais são:\n"
@@ -26,6 +27,8 @@ txt_vencedor:     .asciz "\nParabéns! Jogador "
 txt_venceu:       .asciz " venceu!\n"
 txt_empate:       .asciz "\nO jogo empatou!\n"
 txt_ia:		  .asciz "\nJogada da ia:\n"
+txt_j1_venceu:	  .asciz "\nJ1 venceu:"
+txt_j2_venceu:	  .asciz "\nJ2 venceu:"
 espaco:           .asciz " "
 quebra:	.asciz	"\n"
 clear_cmd:	  .asciz "\n\n\n\n\n\n\n\n\n"
@@ -75,6 +78,29 @@ config_submenu:
     j error
 
 #--------------------	
+vitorias_por_jogador:
+    la a0, txt_j1_venceu
+    li a7, 4
+    ecall
+    
+    lw a0, vit_jogador1
+    li a7, 1
+    ecall
+
+    la a0, txt_j2_venceu
+    li a7, 4
+    ecall
+
+    lw a0, vit_jogador2
+    li a7, 1
+    ecall
+    
+    la a0, quebra
+    li a7, 4
+    ecall
+    
+    ret
+#--------------------	
 config_jogadores:
     la a0, txt_jogadores
     li a7, 4
@@ -91,7 +117,7 @@ config_jogadores:
     
 
     j error
-    
+
 #--------------------	  
 
 config_tabuleiro:
@@ -191,16 +217,32 @@ mostrar_config:
     ecall
 
     j main_menu
-
+#--------------------	  
+jogadores_comeco:
+	li a7, 4
+	la a0, txt_comeco
+	ecall
+	li a7, 5
+	ecall
+	li t0, 2
+	mv t1, a0
+	beq t0, t1, troca_para_jogador_2
+	j troca_para_jogador_1
 #--------------------	
 game_menu:
+    la t0, num_jogadas
+    sw zero, 0(t0)
+    
     la a0, tabuleiro #pos. de memória da matriz do tabuleiro
     la a1, tamanho_tab 
     lw a1, 0(a1) #quantidade de colunas do tabuleiro
     call inicializa_tabuleiro
-    call imprime_tabuleiro
-    la t0, num_jogadas
-    sw zero, 0(t0)
+    
+    #Verifica se precisa trocar de jogador para começo com IA        
+    la t1, num_jogador
+    lw t1, 0(t1)
+    li t2, 1
+    beq t1, t2, jogadores_comeco
     
     j loop_jogo
 #--------------------		
@@ -244,11 +286,13 @@ continua_jogo:
     beq t1, t2, troca_para_jogador_1
     
 troca_para_jogador_1:
+    la t0, jogador_atual
     li t1, 1
     sw t1, 0(t0)
     j loop_jogo
     
 troca_para_jogador_2:
+    la t0, jogador_atual
     li t1, 2
     sw t1, 0(t0)
     j loop_jogo
@@ -332,6 +376,11 @@ final_inicializa:
 	ret
 #--------------------	
 imprime_tabuleiro:
+	mv t0, a0
+	mv s1, ra
+        call vitorias_por_jogador
+        mv ra, s1
+        mv a0, t0
 	li t0, 6 #tamanho do primeiro loop(número de linhas)
 	li t1, 0 #variavel de controle do primeiro loop
 	
@@ -390,7 +439,7 @@ verifica_vencedor:
 
     mv t5, a0
     mv t6, a1
-	mv a7,ra
+    mv a7,ra
 
     jal ra, verifica_linha
     li t0, 4
@@ -664,12 +713,21 @@ adiciona_jogada:
     
 	
 jogada_invalida:
+	li t3, 1
+	la t4, jogador_atual
+	lw t4, 0(t4)
+	beq t3, t3, jogada_invalida_jogador
+	j jogada_invalida_ia
+jogada_invalida_jogador:
 	li a7, 4
 	la a0, txt_jogada_invalida
 	ecall
 	j jogada
-	
-
+jogada_invalida_ia:
+	li t3, 2
+	la t4, num_jogador
+	beq t4,t3, jogada_invalida_jogador
+	j jogada
 #---------------------------
 finish:
     li a7, 10
