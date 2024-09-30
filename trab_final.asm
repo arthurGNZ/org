@@ -605,8 +605,8 @@ carrega_jogada:
     beq a0, a1, carrega_jogador
     la a0, num_jogador
     lw a0, 0(a0)
-    beq a0, a1, carrega_jogador
-    j carrega_ia
+    beq a0, a1, carrega_ia
+    j carrega_jogador
 carrega_jogador:
     li a7, 4
     la a0, txt_jogada
